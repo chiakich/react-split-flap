@@ -27,7 +27,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/akira02/react-split-flap.git"
+    "url": "git+https://github.com/chiakich/react-split-flap.git"
   },
   "peerDependencies": {
     "react": ">=16.8.0",

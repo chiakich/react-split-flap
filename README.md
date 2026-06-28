@@ -7,8 +7,8 @@
 
 A React component that simulates the classic split-flap display effect, inspired by train stations and airport displays.
 
-[Live Demo](https://akira02.github.io/react-split-flap)  
-[GitHub Repository](https://github.com/akira02/react-split-flap)
+[Live Demo](https://chiakich.github.io/react-split-flap)<br>
+[GitHub Repository](https://github.com/chiakich/react-split-flap)
 
 ## Features
 
