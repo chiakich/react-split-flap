@@ -13,6 +13,7 @@ A React component that simulates the classic split-flap display effect, inspired
 ## Features
 
 - **Realistic Flip Animation** - Simulates authentic mechanical flipping effects
+- **Built for Scale** - Hundreds of digits flip smoothly on a single shared animation clock (see [Performance](#performance))
 - **Multiple Themes** - Built-in light and dark themes
 - **Various Sizes** - From small to extra-large size options
 - **Highly Customizable** - Support for custom character sets, animation speed, etc.
@@ -34,7 +35,7 @@ import React from 'react'
 import { SplitFlap, Presets } from 'react-split-flap'
 
 function App() {
-  return <SplitFlap value="HELLO" chars={Presets.ALPHANUM} length={5} />
+  return <SplitFlap value="HELLO" chars={Presets.ALPHANUM} />
 }
 ```
 
@@ -46,23 +47,32 @@ Perfect for displaying strings with character-by-character flipping animation.
 
 #### Props
 
-| Property     | Type                                         | Default       | Description                                                                   |
-| ------------ | -------------------------------------------- | ------------- | ----------------------------------------------------------------------------- |
-| `value`      | `string`                                     | -             | Value to display                                                              |
-| `length`     | `number`                                     | -             | Number of digits to display. If set to 1, will display full value on one flap |
-| `chars`      | `string[]`                                   | `Presets.NUM` | Available character set                                                       |
-| `padChar`    | `string`                                     | `' '`         | Padding character                                                             |
-| `padMode`    | `'auto' \| 'start' \| 'end'`                 | `'auto'`      | 'auto' will align number right and string left                                |
-| `digitWidth` | `number`                                     | -             | Custom width for each digit (pixels)                                          |
-| `timing`     | `number`                                     | `30`          | Animation interval (milliseconds)                                             |
-| `hinge`      | `boolean`                                    | `true`        | Whether to show hinge line                                                    |
-| `theme`      | `'default' \| 'light' \| 'dark'`             | `'default'`   | Theme variant                                                                 |
-| `size`       | `'small' \| 'medium' \| 'large' \| 'xlarge'` | `'medium'`    | Size variant                                                                  |
-| `className`  | `string`                                     | `''`          | CSS class name                                                                |
-| `style`      | `React.CSSProperties`                        | -             | Inline styles                                                                 |
-| `background` | `string`                                     | -             | Custom background color or gradient for the flaps                             |
-| `fontColor`  | `string`                                     | -             | Custom font color for the flap text                                           |
-| `render`     | `(children: ReactNode) => ReactNode`         | -             | Custom render function                                                        |
+| Property         | Type                                         | Default        | Description                                                                          |
+| ---------------- | -------------------------------------------- | -------------- | ------------------------------------------------------------------------------------ |
+| `value`          | `string`                                     | -              | Value to display                                                                     |
+| `chars`          | `string[]`                                   | `Presets.NUM`  | Available character set                                                              |
+| `length`         | `number`                                     | `value.length` | Number of digits to display; longer values are truncated, shorter values padded      |
+| `mode`           | `'chars' \| 'words'`                         | `'chars'`      | `'chars'` flips per character; `'words'` shows the whole value on a single flap      |
+| `padChar`        | `string`                                     | `' '`          | Padding character                                                                    |
+| `align`          | `'auto' \| 'left' \| 'right'`                | `'auto'`       | Where the value sits when shorter than `length`; `'auto'` right-aligns numbers       |
+| `animateOnMount` | `boolean`                                    | `true`         | Roll from blank to the initial value on mount; `false` shows it immediately          |
+| `digitWidth`     | `number`                                     | -              | Custom width for each digit (pixels)                                                 |
+| `timing`         | `number`                                     | `60`           | Interval between flips (milliseconds)                                                |
+| `hinge`          | `boolean`                                    | `true`         | Whether to show hinge line                                                           |
+| `theme`          | `'default' \| 'light' \| 'dark'`             | `'default'`    | Theme variant                                                                        |
+| `size`           | `'small' \| 'medium' \| 'large' \| 'xlarge'` | `'medium'`     | Size variant                                                                         |
+| `className`      | `string`                                     | `''`           | CSS class name                                                                       |
+| `style`          | `React.CSSProperties`                        | -              | Inline styles                                                                        |
+| `background`     | `string`                                     | -              | Custom background color or gradient for the flaps                                    |
+| `fontColor`      | `string`                                     | -              | Custom font color for the flap text                                                  |
+| `render`         | `(children: ReactNode) => ReactNode`         | -              | Custom render function                                                               |
+
+> `padMode` (`'auto' | 'start' | 'end'`) is still accepted for backwards compatibility but deprecated — use `align` instead (`'start'` → `'left'`, `'end'` → `'right'`).
+
+Notes:
+
+- The value is uppercased only when every entry in `chars` is uppercase, so lowercase character sets work as expected.
+- Characters missing from `chars` do a full rotation through the set before landing on the fallback character.
 
 ### LongFlap - Complex Content Display
 
@@ -70,21 +80,24 @@ Perfect for displaying complex ReactNode components with ID-based switching, ide
 
 #### Props
 
-| Property      | Type                                                  | Default     | Description                                       |
-| ------------- | ----------------------------------------------------- | ----------- | ------------------------------------------------- |
-| `flaps`       | `Array<{id: string \| number, component: ReactNode}>` | -           | Array of flap items with ID and component         |
-| `displayId`   | `string \| number`                                    | -           | Current display ID to show                        |
-| `digitWidth`  | `number`                                              | -           | Custom width for the flap (pixels)                |
-| `digitHeight` | `number`                                              | -           | Custom height for the flap (pixels)               |
-| `timing`      | `number`                                              | `60`        | Animation timing (milliseconds)                   |
-| `hinge`       | `boolean`                                             | `true`      | Whether to show hinge line                        |
-| `theme`       | `'default' \| 'light' \| 'dark'`                      | `'default'` | Theme variant                                     |
-| `size`        | `'small' \| 'medium' \| 'large' \| 'xlarge'`          | `'medium'`  | Size variant                                      |
-| `className`   | `string`                                              | `''`        | CSS class name                                    |
-| `style`       | `React.CSSProperties`                                 | -           | Inline styles                                     |
-| `background`  | `string`                                              | -           | Custom background color or gradient for the flaps |
-| `fontColor`   | `string`                                              | -           | Custom font color for the flap text               |
-| `render`      | `(children: ReactNode) => ReactNode`                  | -           | Custom render function                            |
+| Property         | Type                                                  | Default     | Description                                                     |
+| ---------------- | ----------------------------------------------------- | ----------- | ---------------------------------------------------------------- |
+| `flaps`          | `Array<{id: string \| number, component: ReactNode}>` | -           | Array of flap items with ID and component                       |
+| `displayId`      | `string \| number`                                    | -           | Current display ID to show                                      |
+| `animateOnMount` | `boolean`                                             | `true`      | Roll from blank to the initial flap on mount                    |
+| `digitWidth`     | `number`                                              | -           | Custom width for the flap (pixels)                              |
+| `digitHeight`    | `number`                                              | `50`        | Custom height for the flap (pixels)                             |
+| `timing`         | `number`                                              | `60`        | Interval between flips (milliseconds)                           |
+| `hinge`          | `boolean`                                             | `true`      | Whether to show hinge line                                      |
+| `theme`          | `'default' \| 'light' \| 'dark'`                      | `'default'` | Theme variant                                                   |
+| `size`           | `'small' \| 'medium' \| 'large' \| 'xlarge'`          | `'medium'`  | Size variant                                                    |
+| `className`      | `string`                                              | `''`        | CSS class name                                                  |
+| `style`          | `React.CSSProperties`                                 | -           | Inline styles                                                   |
+| `background`     | `string`                                              | -           | Custom background color or gradient for the flaps               |
+| `fontColor`      | `string`                                              | -           | Custom font color for the flap text                             |
+| `render`         | `(children: ReactNode) => ReactNode`                  | -           | Custom render function                                          |
+
+The flap set identity follows the `id` list, so defining `flaps` inline in JSX is safe — the animation state is preserved across re-renders as long as the ids stay the same.
 
 #### When to use LongFlap vs SplitFlap
 
@@ -94,6 +107,16 @@ Perfect for displaying complex ReactNode components with ID-based switching, ide
   - ID-based switching between predefined states
   - Single flap displaying rich content
   - Custom rendering of complex elements
+
+## Performance
+
+Version 0.2.0 was rebuilt so that large boards (hundreds of digits flipping at once) stay smooth. Profiling showed the old bottlenecks were not JavaScript compute but browser rendering work, so the fixes target that:
+
+- **One shared animation clock.** All digits subscribe to a single `requestAnimationFrame` loop instead of one `setInterval` per digit. Every flip due in the same frame is applied in one batched React commit, so a 400-digit board causes one render pass per frame instead of 400 scattered ones. When the tab is hidden, the clock falls back to a coarse timer so displays still reach their target value in the background.
+- **No DOM remounting.** Flap elements stay mounted across flips; the flip animation is restarted through the Web Animations API instead of recreating DOM nodes with new keys. This eliminates per-flip node churn (and stops DOM-observing browser extensions from rescanning the page on every flip).
+- **Minimal compositor layers.** Only the two actively animating flap halves of each digit get promoted to GPU layers, instead of every flap half unconditionally. In a ~400-digit trace this cut compositing layers by ~70% and GPU process time by ~27%.
+
+The animations themselves remain pure CSS transforms, so flips run on the compositor and respect `prefers-reduced-motion`.
 
 ## Built-in Themes & Sizes
 
@@ -125,7 +148,7 @@ function Counter() {
 
   return (
     <div>
-      <SplitFlap value={count.toString()} chars={Presets.NUM} length={3} className="medium light" padMode="start" />
+      <SplitFlap value={count.toString()} chars={Presets.NUM} length={3} align="right" theme="light" />
       <button onClick={() => setCount(count + 1)}>Increment</button>
     </div>
   )
@@ -152,7 +175,29 @@ function TextCarousel() {
     return () => clearInterval(interval)
   }, [])
 
-  return <SplitFlap value={currentWord} chars={Presets.ALPHANUM} length={5} className="large dark" timing={20} />
+  return <SplitFlap value={currentWord} chars={Presets.ALPHANUM} length={5} size="large" theme="dark" timing={20} />
+}
+```
+
+#### Words Mode
+
+```tsx
+import { SplitFlap } from 'react-split-flap'
+
+// The whole value flips as a single flap
+function StatusBoard({ status }: { status: string }) {
+  return <SplitFlap value={status} chars={['ON TIME', 'DELAYED', 'CANCELLED']} mode="words" />
+}
+```
+
+#### Dashboard (no mount animation)
+
+```tsx
+import { SplitFlap, Presets } from 'react-split-flap'
+
+// Shows the initial value immediately; only subsequent changes flip
+function Metric({ count }: { count: number }) {
+  return <SplitFlap value={String(count)} chars={Presets.NUM} length={4} align="right" animateOnMount={false} />
 }
 ```
 
@@ -167,7 +212,6 @@ function CustomStyledFlap() {
     <SplitFlap
       value="CUSTOM"
       chars={Presets.ALPHANUM}
-      length={6}
       size="large"
       background="linear-gradient(45deg, #ff6b6b, #4ecdc4)"
       fontColor="#ffffff"
@@ -185,7 +229,6 @@ function CustomStyledFlap() {
 import React, { useState } from 'react'
 import { LongFlap } from 'react-split-flap'
 
-/* Keep prop "flaps" constant. Will trigger <LongFlap /> re-render when changed. */
 const weatherFlaps = [
   {
     id: 'sunny',
@@ -217,7 +260,7 @@ function WeatherDisplay() {
 #### Custom Styled LongFlap
 
 ```tsx
-import React from 'react'
+import React, { useState } from 'react'
 import { LongFlap } from 'react-split-flap'
 
 const styledFlaps = [
@@ -248,6 +291,16 @@ function CustomStyledLongFlap() {
   )
 }
 ```
+
+## Migrating from 0.1.x
+
+- **Named exports only.** `import SplitFlap from 'react-split-flap'` no longer works — use `import { SplitFlap } from 'react-split-flap'`.
+- **Internal components are no longer exported.** `Flap`, `FlapDigit`, and `FlapStack` were implementation details and have been removed from the public API.
+- **`length` is now optional** and defaults to `value.length`.
+- **Words mode is explicit.** Use `mode="words"` instead of `length={1}` (the old `length={1}` behavior is kept as a fallback for now). Words mode no longer truncates the value.
+- **`padMode` is deprecated** in favor of `align`: `padMode="start"` → `align="left"`, `padMode="end"` → `align="right"`.
+- **Lowercase character sets now match.** The value is only uppercased when the whole char set is uppercase; previously it was always uppercased.
+- **Screen readers now announce the value** (`role="img"` + `aria-label`); previously the component was fully `aria-hidden`.
 
 ## Development
 

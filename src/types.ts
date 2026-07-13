@@ -1,123 +1,75 @@
 import React from 'react'
 
 export interface SplitFlapProps {
-  /**
-   * The value to display
-   */
+  /** The value to display */
   value: string
-  /**
-   * Characters available for display - string characters only
-   */
+  /** Characters available for display */
   chars?: string[]
-  /**
-   * Number of digits to display
-   */
-  length: number
-  /**
-   * Character used for padding
-   */
+  /** Number of digits to display (defaults to value.length); ignored in words mode */
+  length?: number
+  /** 'chars' flips per character; 'words' shows the whole value on a single flap */
+  mode?: 'chars' | 'words'
+  /** Character used for padding */
   padChar?: string
-  /**
-   * Padding mode: 'auto', 'start', 'end'
-   */
+  /** Where the value sits when shorter than length; 'auto' right-aligns numbers, left-aligns text */
+  align?: 'auto' | 'left' | 'right'
+  /** @deprecated Use `align` instead ('start' → 'left', 'end' → 'right') */
   padMode?: 'auto' | 'start' | 'end'
-  /**
-   * Custom width for each digit (in pixels)
-   */
+  /** Roll from blank to the initial value on mount (default true) */
+  animateOnMount?: boolean
+  /** Custom width for each digit (in pixels) */
   digitWidth?: number
-  /**
-   * Animation timing in milliseconds
-   */
+  /** Interval between flips in milliseconds */
   timing?: number
-  /**
-   * Show hinge line
-   */
+  /** Show hinge line */
   hinge?: boolean
-  /**
-   * Theme variant
-   */
+  /** Theme variant */
   theme?: 'default' | 'light' | 'dark'
-  /**
-   * Size variant
-   */
+  /** Size variant */
   size?: 'small' | 'medium' | 'large' | 'xlarge'
-  /**
-   * CSS class name
-   */
+  /** CSS class name */
   className?: string
-  /**
-   * CSS styles
-   */
+  /** CSS styles */
   style?: React.CSSProperties
-  /**
-   * Custom background color or gradient for the flaps
-   */
+  /** Custom background color or gradient for the flaps */
   background?: string
-  /**
-   * Custom font color for the flap text
-   */
+  /** Custom font color for the flap text */
   fontColor?: string
-  /**
-   * Custom render function
-   */
+  /** Custom render function */
   render?: (children: React.ReactNode) => React.ReactNode
 }
 
 export interface LongFlapProps {
-  /**
-   * Array of flap items with id and component
-   */
+  /** Array of flap items with id and component */
   flaps: Array<{
     id: string | number
     component: React.ReactNode
   }>
-  /**
-   * Current display ID to show
-   */
+  /** Current display ID to show */
   displayId: string | number
-  /**
-   * Custom width for the flap (in pixels)
-   */
+  /** Roll from blank to the initial flap on mount (default true) */
+  animateOnMount?: boolean
+  /** Custom width for the flap (in pixels) */
   digitWidth?: number
-  /**
-   * Custom height for the flap (in pixels)
-   */
+  /** Custom height for the flap (in pixels) */
   digitHeight?: number
-  /**
-   * Animation timing in milliseconds
-   */
+  /** Interval between flips in milliseconds */
   timing?: number
-  /**
-   * Show hinge line
-   */
+  /** Show hinge line */
   hinge?: boolean
-  /**
-   * Theme variant
-   */
+  /** Theme variant */
   theme?: 'default' | 'light' | 'dark'
-  /**
-   * Size variant
-   */
+  /** Size variant */
   size?: 'small' | 'medium' | 'large' | 'xlarge'
-  /**
-   * CSS class name
-   */
+  /** CSS class name */
   className?: string
-  /**
-   * CSS styles
-   */
+  /** CSS styles */
   style?: React.CSSProperties
-  /**
-   * Custom background color or gradient for the flaps
-   */
+  /** Custom background color or gradient for the flaps */
   background?: string
-  /**
-   * Custom font color for the flap text
-   */
+  /** Custom font color for the flap text */
   fontColor?: string
-  /**
-   * Custom render function
-   */
+  /** Custom render function */
   render?: (children: React.ReactNode) => React.ReactNode
 }
 
@@ -140,18 +92,12 @@ export interface FlapDigitProps {
 
 export interface FlapStackProps {
   stack: (string | React.ReactNode)[]
-  value: number // Changed to index of the stack
+  /** Stable identity of the stack contents; a change resets the cursor */
+  stackKey: string
+  value: number
   timing: number
   mode: 'num' | 'alpha' | 'custom' | 'words'
   hinge: boolean
   digitWidth?: number
-}
-
-export interface SplitFlapStackProps {
-  stack: string[]
-  value: string
-  timing: number
-  mode: 'num' | 'alpha' | 'custom' | 'words'
-  hinge: boolean
-  digitWidth?: number
+  animateOnMount?: boolean
 }

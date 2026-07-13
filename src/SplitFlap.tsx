@@ -1,15 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useMemo } from 'react'
 import { SplitFlapProps } from './types'
 import { FlapStack } from './components'
 import { Presets } from './presets'
 
-// Main display component
+// Joiner unlikely to appear in user-provided chars
+const KEY_SEPARATOR = '\u0000'
+
 const SplitFlap: React.FC<SplitFlapProps> = ({
   value,
   chars = Presets.NUM,
   length,
+  mode,
   padChar = ' ',
-  padMode = 'auto',
+  align,
+  padMode,
+  animateOnMount = true,
   digitWidth,
   timing = 60,
   hinge = true,
@@ -21,119 +26,108 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
   fontColor,
   render,
 }) => {
-  const [displayValue, setDisplayValue] = useState<string>('')
-  const [mode, setMode] = useState<'num' | 'alpha' | 'custom'>('num')
+  // Legacy: length === 1 used to mean words mode
+  const wordsMode = mode === 'words' || (mode === undefined && length === 1)
+  const displayLength = length ?? value.length
 
-  // Determine mode based on chars content
-  useEffect(() => {
-    // Check if chars contains only numbers
-    const isNumeric = chars.every((char) => /^[\s0-9]$/.test(char))
+  const charsKey = useMemo(() => chars.join(KEY_SEPARATOR), [chars])
 
-    if (isNumeric) {
-      setMode('num')
-    } else {
-      setMode('alpha')
-    }
-  }, [chars])
+  // Only uppercase the value when the char set itself is uppercase,
+  // so lowercase char sets stay matchable
+  const uppercase = useMemo(() => chars.every((char) => char === char.toUpperCase()), [chars])
 
-  // Process value with padding
-  useEffect(() => {
-    let processedValue = value
+  const digitMode = useMemo(() => (chars.every((char) => /^[\s0-9]$/.test(char)) ? 'num' : 'alpha'), [chars])
 
-    // Handle padding
-    if (processedValue.length < length) {
-      const padCount = length - processedValue.length
-      const padding = padChar.repeat(padCount)
+  const displayValue = useMemo(() => {
+    let processedValue = uppercase ? value.toUpperCase() : value
 
-      const padEnd = padMode === 'auto' ? /^[0-9.,+-]*$/.test(processedValue) : padMode === 'end'
+    if (wordsMode) return processedValue
 
-      processedValue = padEnd ? padding + processedValue : processedValue + padding
-    } else if (processedValue.length > length) {
-      processedValue = processedValue.substring(0, length)
+    if (processedValue.length < displayLength) {
+      const padding = padChar.repeat(displayLength - processedValue.length)
+      const effectiveAlign = align ?? (padMode === 'start' ? 'left' : padMode === 'end' ? 'right' : 'auto')
+      const padStart = effectiveAlign === 'right' || (effectiveAlign === 'auto' && /^[0-9.,+-]*$/.test(processedValue))
+
+      processedValue = padStart ? padding + processedValue : processedValue + padding
+    } else if (processedValue.length > displayLength) {
+      processedValue = processedValue.substring(0, displayLength)
     }
 
-    // Convert to uppercase for string chars
-    processedValue = processedValue.toUpperCase()
+    return processedValue
+  }, [value, uppercase, wordsMode, displayLength, padChar, align, padMode])
 
-    setDisplayValue(processedValue)
-  }, [value, length, padChar, padMode, mode])
-
-  // Helper function to find index of char in stack
-  const findCharIndexInStack = (char: string): { index: number; stack: (string | React.ReactNode)[] } => {
-    // First try exact match
-    const index = chars.findIndex((item) => item === char)
+  // Chars missing from the set get an extended stack: a full rotation
+  // through all chars before landing on the fallback
+  const findCharInStack = (char: string): { index: number; stack: string[]; key: string } => {
+    const index = chars.indexOf(char)
 
     if (index !== -1) {
-      return { index, stack: chars }
+      return { index, stack: chars, key: charsKey }
     }
 
-    // If no exact match, create extended stack with the missing character
-    // This will cause a full rotation through all chars before showing the fallback
     const extendedStack = [...chars, char]
-    return { index: extendedStack.length - 1, stack: extendedStack }
+    return { index: extendedStack.length - 1, stack: extendedStack, key: charsKey + KEY_SEPARATOR + char }
   }
 
-  const renderDigits = useCallback(() => {
-    const digits: React.ReactElement[] = []
-
-    // When length=1, display the entire value as a single flap
-    if (length === 1) {
-      // Use displayValue which already includes padding and case conversion
-      const { index: stackIndex, stack } = findCharIndexInStack(displayValue)
-
-      digits.push(
+  const renderDigits = () => {
+    if (wordsMode) {
+      const { index, stack, key } = findCharInStack(displayValue)
+      return (
         <FlapStack
           key={0}
           stack={stack}
-          value={stackIndex}
+          stackKey={key}
+          value={index}
           mode="words"
           timing={timing}
           hinge={hinge}
           digitWidth={digitWidth}
+          animateOnMount={animateOnMount}
         />
       )
-    } else {
-      // When length>1, display each character separately
-      for (let i = 0; i < length; i++) {
-        const char = displayValue[i] || padChar
-        const { index: stackIndex, stack } = findCharIndexInStack(char)
-
-        digits.push(
-          <FlapStack
-            key={i}
-            stack={stack}
-            value={stackIndex}
-            mode={mode}
-            timing={timing}
-            hinge={hinge}
-            digitWidth={digitWidth}
-          />
-        )
-      }
     }
 
+    const digits: React.ReactElement[] = []
+    for (let i = 0; i < displayLength; i++) {
+      const char = displayValue[i] || padChar
+      const { index, stack, key } = findCharInStack(char)
+
+      digits.push(
+        <FlapStack
+          key={i}
+          stack={stack}
+          stackKey={key}
+          value={index}
+          mode={digitMode}
+          timing={timing}
+          hinge={hinge}
+          digitWidth={digitWidth}
+          animateOnMount={animateOnMount}
+        />
+      )
+    }
     return digits
-  }, [displayValue, chars, mode, length, padChar, timing, hinge, digitWidth, value])
+  }
 
   const displayClasses = [
     'split-flap-display',
     theme !== 'default' ? theme : '',
-    size, // Always include the size class
-    length === 1 ? 'words-mode' : '',
+    size,
+    wordsMode ? 'words-mode' : '',
     className,
   ]
     .filter(Boolean)
     .join(' ')
 
-  // Combine styles with custom background and font color
   const combinedStyle = {
     ...style,
     ...(background && { '--flap-background': background }),
     ...(fontColor && { '--flap-font-color': fontColor }),
   } as React.CSSProperties & { '--flap-background'?: string; '--flap-font-color'?: string }
 
+  // role="img" exposes the label while keeping the flap internals out of the a11y tree
   const content = (
-    <div className={displayClasses} style={combinedStyle} aria-hidden="true" aria-label={value}>
+    <div className={displayClasses} style={combinedStyle} role="img" aria-label={value}>
       {renderDigits()}
     </div>
   )

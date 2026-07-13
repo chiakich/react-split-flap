@@ -1,10 +1,11 @@
-import React, { Fragment } from 'react'
+import React, { Fragment, useMemo } from 'react'
 import { LongFlapProps } from './types'
 import { FlapStack } from './components'
 
 const LongFlap: React.FC<LongFlapProps> = ({
   flaps,
   displayId,
+  animateOnMount = true,
   digitWidth,
   digitHeight = 50,
   timing = 60,
@@ -17,11 +18,12 @@ const LongFlap: React.FC<LongFlapProps> = ({
   fontColor,
   render,
 }) => {
-  // Memoize the stack to maintain stable references
-  const flapStack = React.useMemo(() => flaps.map((f) => <Fragment key={f.id}>{f.component}</Fragment>), [flaps])
+  const flapStack = useMemo(() => flaps.map((f) => <Fragment key={f.id}>{f.component}</Fragment>), [flaps])
 
-  // Memoize the current index to maintain stable reference
-  const currentIndex = React.useMemo(() => {
+  // Cursor identity follows the id list, so inline-defined flaps arrays are safe
+  const stackKey = useMemo(() => flaps.map((f) => String(f.id)).join('\u0000'), [flaps])
+
+  const currentIndex = useMemo(() => {
     const flapIndex = flaps.findIndex((f) => f.id === displayId)
     return flapIndex !== -1 ? flapIndex : 0
   }, [flaps, displayId])
@@ -30,7 +32,6 @@ const LongFlap: React.FC<LongFlapProps> = ({
     .filter(Boolean)
     .join(' ')
 
-  // Add custom styles for LongFlap to ensure proper display
   const longFlapStyle = {
     ...style,
     '--digit-width': digitWidth ? `${digitWidth}px` : 'auto',
@@ -48,11 +49,13 @@ const LongFlap: React.FC<LongFlapProps> = ({
     <div className={displayClasses} style={longFlapStyle} aria-hidden="true">
       <FlapStack
         stack={flapStack}
+        stackKey={stackKey}
         value={currentIndex}
         timing={timing}
         mode="words"
         hinge={hinge}
         digitWidth={digitWidth}
+        animateOnMount={animateOnMount}
       />
     </div>
   )

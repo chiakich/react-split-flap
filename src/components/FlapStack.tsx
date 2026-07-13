@@ -1,54 +1,64 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { FlapStackProps } from '../types'
 import FlapDigit from './FlapDigit'
+import { subscribeTick } from '../ticker'
 
-const FlapStack: React.FC<FlapStackProps> = ({ stack, value, timing, mode, hinge, digitWidth }) => {
-  const [cursor, setCursor] = useState({
-    current: -1,
-    previous: -1,
-    target: 0,
+const FlapStack: React.FC<FlapStackProps> = ({
+  stack,
+  stackKey,
+  value,
+  timing,
+  mode,
+  hinge,
+  digitWidth,
+  animateOnMount = true,
+}) => {
+  const stackLength = stack.length
+
+  const [cursor, setCursor] = useState(() => {
+    if (animateOnMount) {
+      return { current: -1, previous: -1, target: 0 }
+    }
+    const target = Math.max(0, Math.min(value, stackLength - 1))
+    return { current: target, previous: target, target }
   })
 
-  // Reset cursor when stack changes
+  // Reset cursor when the flap set changes (identity via stackKey, not array reference)
+  const mountedRef = useRef(false)
   useEffect(() => {
-    setCursor({
-      current: -1,
-      previous: -1,
-      target: 0,
-    })
-  }, [stack])
+    if (!mountedRef.current) {
+      mountedRef.current = true
+      return
+    }
+    setCursor({ current: -1, previous: -1, target: 0 })
+  }, [stackKey])
 
   // Animation sequence when value changes
   useEffect(() => {
-    // Validate index and set target
-    const target = Math.max(0, Math.min(value, stack.length - 1))
-    const currentStack = stack
+    const target = Math.max(0, Math.min(value, stackLength - 1))
 
-    let { current } = cursor
+    const unsubscribe = subscribeTick(() => {
+      setCursor((prevCursor) => {
+        if (prevCursor.current === target) {
+          unsubscribe()
+          return prevCursor.target === target ? prevCursor : { ...prevCursor, target }
+        }
 
-    // Continue animation if not at target
-    if (current !== target) {
-      const timer = setInterval(() => {
-        setCursor((prevCursor) => {
-          const newPrevious = prevCursor.current
-          const newCurrent = prevCursor.current >= currentStack.length - 1 ? 0 : prevCursor.current + 1
+        const newCurrent = prevCursor.current >= stackLength - 1 ? 0 : prevCursor.current + 1
 
-          if (newCurrent === target) {
-            clearInterval(timer)
-          }
-          return {
-            current: newCurrent,
-            previous: newPrevious,
-            target,
-          }
-        })
-      }, timing)
+        if (newCurrent === target) {
+          unsubscribe()
+        }
+        return {
+          current: newCurrent,
+          previous: prevCursor.current,
+          target,
+        }
+      })
+    }, timing)
 
-      return () => {
-        clearInterval(timer)
-      }
-    }
-  }, [stack, value, timing])
+    return unsubscribe
+  }, [stackKey, stackLength, value, timing])
 
   const { current, previous, target } = cursor
 
