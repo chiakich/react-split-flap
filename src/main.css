@@ -51,7 +51,7 @@
   width: 1.1ch;
   height: 1em;
   box-sizing: content-box;
-  transform-style: preserve-3d;
+  contain: layout style paint;
   overflow: hidden;
 }
 
@@ -81,7 +81,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  backface-visibility: hidden;
 }
 
 .split-flap-part.animated {
@@ -114,6 +113,11 @@
 .split-flap-part.bottom.animated.final {
   animation-name: flapDownBottom;
   animation-timing-function: ease-out;
+}
+
+/* Stays mounted across flips; only revealed by the final flip */
+.split-flap-part.bottom.animated:not(.final) {
+  visibility: hidden;
 }
 
 /* Character display */
