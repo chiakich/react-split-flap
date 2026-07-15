@@ -1,60 +1,37 @@
-import React, { useEffect, useLayoutEffect, useRef } from 'react'
+import React from 'react'
 import { FlapDigitProps } from '../types'
 import Flap from './Flap'
 
-// Avoid the useLayoutEffect warning under SSR
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
-
-const restartAnimations = (el: HTMLDivElement | null) => {
-  if (!el) return
-
-  if (typeof el.getAnimations === 'function') {
-    el.getAnimations().forEach((animation) => {
-      animation.currentTime = 0
-      animation.play()
-    })
-  } else {
-    // Fallback for browsers without Web Animations API: force reflow
-    el.style.animation = 'none'
-    void el.offsetWidth
-    el.style.animation = ''
-  }
-}
-
-const FlapDigit: React.FC<FlapDigitProps> = ({ value, prevValue, final, mode, hinge, digitWidth }) => {
+const FlapDigit: React.FC<FlapDigitProps> = ({ value, prevValue, final, revision, mode, hinge, digitWidth }) => {
   const digitStyle = digitWidth ? { width: `${digitWidth}px` } : {}
-  const animatedTopRef = useRef<HTMLDivElement>(null)
-  const animatedBottomRef = useRef<HTMLDivElement>(null)
-
-  // Flaps stay mounted across flips, so the final flip animation must be
-  // restarted manually when content changes while `final` remains true
-  useIsomorphicLayoutEffect(() => {
-    if (!final) return
-    restartAnimations(animatedTopRef.current)
-    restartAnimations(animatedBottomRef.current)
-  }, [value, prevValue, final])
+  const hasTransition = revision > 0 && value !== prevValue
+  const shouldAnimate = final && hasTransition
+  const phase = (revision % 2) as 0 | 1
 
   return (
     <div className="split-flap-digit" data-kind="digit" data-mode={mode} style={digitStyle}>
       {/* Static top half showing current value */}
-      <Flap hinge={hinge}>{value}</Flap>
+      <Flap>{value}</Flap>
 
       {/* Static bottom half showing previous value */}
-      <Flap bottom hinge={hinge}>
+      <Flap bottom>
         {prevValue}
       </Flap>
 
       {/* Animated top half flipping from previous to current */}
-      <Flap ref={animatedTopRef} animated final={final} hinge={hinge}>
+      <Flap animated final={shouldAnimate} phase={phase} idle={!hasTransition}>
         {prevValue}
       </Flap>
 
       {/* Animated bottom half appearing after top half flips (hidden via CSS until final) */}
-      <Flap ref={animatedBottomRef} bottom animated final={final} hinge={hinge}>
+      <Flap bottom animated final={shouldAnimate} phase={phase} idle={!hasTransition}>
         {value}
       </Flap>
+
+      {/* All four flap faces meet at the same hinge, so one overlay is enough. */}
+      {hinge && <div className="split-flap-hinge" data-kind="hinge" />}
     </div>
   )
 }
 
-export default FlapDigit
+export default React.memo(FlapDigit)

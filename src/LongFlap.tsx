@@ -9,6 +9,7 @@ const LongFlap: React.FC<LongFlapProps> = ({
   digitWidth,
   digitHeight = 50,
   timing = 60,
+  duration,
   hinge = true,
   theme = 'default',
   size = 'medium',
@@ -18,6 +19,7 @@ const LongFlap: React.FC<LongFlapProps> = ({
   fontColor,
   render,
 }) => {
+  const effectiveDuration = duration ?? (className.split(/\s+/).includes('performance-mode') ? 160 : 300)
   const flapStack = useMemo(() => flaps.map((f) => <Fragment key={f.id}>{f.component}</Fragment>), [flaps])
 
   // Cursor identity follows the id list, so inline-defined flaps arrays are safe
@@ -36,11 +38,13 @@ const LongFlap: React.FC<LongFlapProps> = ({
     ...style,
     '--digit-width': digitWidth ? `${digitWidth}px` : 'auto',
     '--digit-height': digitHeight ? `${digitHeight}px` : 'auto',
+    '--flap-animation-duration': `${effectiveDuration}ms`,
     ...(background && { '--flap-background': background }),
     ...(fontColor && { '--flap-font-color': fontColor }),
   } as React.CSSProperties & {
     '--digit-width': string
     '--digit-height': string
+    '--flap-animation-duration': string
     '--flap-background'?: string
     '--flap-font-color'?: string
   }
@@ -52,6 +56,7 @@ const LongFlap: React.FC<LongFlapProps> = ({
         stackKey={stackKey}
         value={currentIndex}
         timing={timing}
+        duration={effectiveDuration}
         mode="words"
         hinge={hinge}
         digitWidth={digitWidth}

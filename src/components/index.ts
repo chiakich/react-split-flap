@@ -1,3 +1,5 @@
 export { default as Flap } from './Flap'
+export { default as FlapBoard } from './FlapBoard'
 export { default as FlapDigit } from './FlapDigit'
 export { default as FlapStack } from './FlapStack'
+export type { FlapBoardDigit } from './FlapBoard'

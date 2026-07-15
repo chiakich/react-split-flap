@@ -58,6 +58,7 @@ Perfect for displaying strings with character-by-character flipping animation.
 | `animateOnMount` | `boolean`                                    | `true`         | Roll from blank to the initial value on mount; `false` shows it immediately          |
 | `digitWidth`     | `number`                                     | -              | Custom width for each digit (pixels)                                                 |
 | `timing`         | `number`                                     | `60`           | Interval between flips (milliseconds)                                                |
+| `duration`       | `number`                                     | `300`          | Duration of the final flap animation (milliseconds)                                  |
 | `hinge`          | `boolean`                                    | `true`         | Whether to show hinge line                                                           |
 | `theme`          | `'default' \| 'light' \| 'dark'`             | `'default'`    | Theme variant                                                                        |
 | `size`           | `'small' \| 'medium' \| 'large' \| 'xlarge'` | `'medium'`     | Size variant                                                                         |
@@ -88,6 +89,7 @@ Perfect for displaying complex ReactNode components with ID-based switching, ide
 | `digitWidth`     | `number`                                              | -           | Custom width for the flap (pixels)                              |
 | `digitHeight`    | `number`                                              | `50`        | Custom height for the flap (pixels)                             |
 | `timing`         | `number`                                              | `60`        | Interval between flips (milliseconds)                           |
+| `duration`       | `number`                                              | `300`       | Duration of the final flap animation (milliseconds)             |
 | `hinge`          | `boolean`                                             | `true`      | Whether to show hinge line                                      |
 | `theme`          | `'default' \| 'light' \| 'dark'`                      | `'default'` | Theme variant                                                   |
 | `size`           | `'small' \| 'medium' \| 'large' \| 'xlarge'`          | `'medium'`  | Size variant                                                    |
@@ -110,13 +112,25 @@ The flap set identity follows the `id` list, so defining `flaps` inline in JSX i
 
 ## Performance
 
-Version 0.2.0 was rebuilt so that large boards (hundreds of digits flipping at once) stay smooth. Profiling showed the old bottlenecks were not JavaScript compute but browser rendering work, so the fixes target that:
+The 0.2 release line is built so that large boards (hundreds of digits flipping at once) stay smooth. Profiling showed the old bottlenecks were not JavaScript compute but browser rendering work, so the fixes target that:
 
 - **One shared animation clock.** All digits subscribe to a single `requestAnimationFrame` loop instead of one `setInterval` per digit. Every flip due in the same frame is applied in one batched React commit, so a 400-digit board causes one render pass per frame instead of 400 scattered ones. When the tab is hidden, the clock falls back to a coarse timer so displays still reach their target value in the background.
-- **No DOM remounting.** Flap elements stay mounted across flips; the flip animation is restarted through the Web Animations API instead of recreating DOM nodes with new keys. This eliminates per-flip node churn (and stops DOM-observing browser extensions from rescanning the page on every flip).
-- **Minimal compositor layers.** Only the two actively animating flap halves of each digit get promoted to GPU layers, instead of every flap half unconditionally. In a ~400-digit trace this cut compositing layers by ~70% and GPU process time by ~27%.
+- **One cursor update per display.** Character-mode digits share a cursor array and one ticker subscription. A 400-digit `SplitFlap` performs at most one React state update per tick instead of one update per digit; memoized digit children then render only when their own cursor changes.
+- **Memoized display boundaries.** Unchanged displays and digits skip parent-driven renders. This matters for boards that cascade one row at a time: updating one row no longer walks every stable digit in the other rows.
+- **No DOM remounting or per-digit animation reads.** Flap elements stay mounted across flips and alternate between two equivalent CSS animation names. This restarts at the first frame in the same style update without recreating nodes or calling `getAnimations()` for every face.
+- **Settled static underlays.** After a flip finishes, each display batches its completed digits into their static state and hides the animated faces. Safari can therefore prepare the next compositor animation without exposing the stale underlay from the previous flip.
+- **One hinge per digit.** The four flap faces share a single hinge overlay instead of rendering four identical hinge nodes, reducing the DOM by three elements per digit without changing the visual result.
+- **Minimal compositor work.** Only the two actively animating flap halves of each digit get promoted to GPU layers, instead of every flap half unconditionally. Each face is a true half-height surface rather than a full-height surface masked by `clip-path`, cutting its raster area in half and avoiding hundreds of animated masks. In a ~400-digit trace, selective promotion alone cut compositing layers by ~70% and GPU process time by ~27%.
 
 The animations themselves remain pure CSS transforms, so flips run on the compositor and respect `prefers-reduced-motion`.
+
+For large boards, keep array and object props stable so the memoized boundaries can do their job: define `chars`/`flaps` outside render or wrap them in `useMemo`, and avoid recreating `style` or `render` callbacks on every parent render. Set `animateOnMount={false}` when a large board should appear immediately. If an application runs a repeating showcase, pause the value-producing timer with `IntersectionObserver` while the board is offscreen; the component cannot infer whether background progression is meaningful to the application.
+
+For dense, small-cell displays, add `className="performance-mode"`. It keeps the full two-stage 3D flip but removes per-cell highlight and shadow paints, uses strict containment, and shortens the flip to reduce overlapping compositor layers. This is intended for boards where those sub-pixel decorations are not visible:
+
+```tsx
+<SplitFlap value={frame} length={240} className="performance-mode" animateOnMount={false} />
+```
 
 ## Built-in Themes & Sizes
 

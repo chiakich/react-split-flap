@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { SplitFlapProps } from './types'
-import { FlapStack } from './components'
+import { FlapBoard, FlapBoardDigit, FlapStack } from './components'
 import { Presets } from './presets'
 
 // Joiner unlikely to appear in user-provided chars
@@ -17,6 +17,7 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
   animateOnMount = true,
   digitWidth,
   timing = 60,
+  duration,
   hinge = true,
   theme = 'default',
   size = 'medium',
@@ -26,6 +27,7 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
   fontColor,
   render,
 }) => {
+  const effectiveDuration = duration ?? (className.split(/\s+/).includes('performance-mode') ? 160 : 300)
   // Legacy: length === 1 used to mean words mode
   const wordsMode = mode === 'words' || (mode === undefined && length === 1)
   const displayLength = length ?? value.length
@@ -69,6 +71,19 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
     return { index: extendedStack.length - 1, stack: extendedStack, key: charsKey + KEY_SEPARATOR + char }
   }
 
+  const digits = useMemo<FlapBoardDigit[]>(() => {
+    if (wordsMode) return []
+
+    const result: FlapBoardDigit[] = []
+    for (let i = 0; i < displayLength; i++) {
+      const char = displayValue[i] || padChar
+      const { index, stack, key } = findCharInStack(char)
+
+      result.push({ stack, stackKey: key, value: index })
+    }
+    return result
+  }, [chars, charsKey, displayLength, displayValue, padChar, wordsMode])
+
   const renderDigits = () => {
     if (wordsMode) {
       const { index, stack, key } = findCharInStack(displayValue)
@@ -80,6 +95,7 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
           value={index}
           mode="words"
           timing={timing}
+          duration={effectiveDuration}
           hinge={hinge}
           digitWidth={digitWidth}
           animateOnMount={animateOnMount}
@@ -87,26 +103,17 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
       )
     }
 
-    const digits: React.ReactElement[] = []
-    for (let i = 0; i < displayLength; i++) {
-      const char = displayValue[i] || padChar
-      const { index, stack, key } = findCharInStack(char)
-
-      digits.push(
-        <FlapStack
-          key={i}
-          stack={stack}
-          stackKey={key}
-          value={index}
-          mode={digitMode}
-          timing={timing}
-          hinge={hinge}
-          digitWidth={digitWidth}
-          animateOnMount={animateOnMount}
-        />
-      )
-    }
-    return digits
+    return (
+      <FlapBoard
+        digits={digits}
+        timing={timing}
+        duration={effectiveDuration}
+        mode={digitMode}
+        hinge={hinge}
+        digitWidth={digitWidth}
+        animateOnMount={animateOnMount}
+      />
+    )
   }
 
   const displayClasses = [
@@ -121,9 +128,14 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
 
   const combinedStyle = {
     ...style,
+    '--flap-animation-duration': `${effectiveDuration}ms`,
     ...(background && { '--flap-background': background }),
     ...(fontColor && { '--flap-font-color': fontColor }),
-  } as React.CSSProperties & { '--flap-background'?: string; '--flap-font-color'?: string }
+  } as React.CSSProperties & {
+    '--flap-animation-duration': string
+    '--flap-background'?: string
+    '--flap-font-color'?: string
+  }
 
   // role="img" exposes the label while keeping the flap internals out of the a11y tree
   const content = (
@@ -135,4 +147,4 @@ const SplitFlap: React.FC<SplitFlapProps> = ({
   return render ? render(content) : content
 }
 
-export default SplitFlap
+export default React.memo(SplitFlap)

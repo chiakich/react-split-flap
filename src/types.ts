@@ -21,6 +21,8 @@ export interface SplitFlapProps {
   digitWidth?: number
   /** Interval between flips in milliseconds */
   timing?: number
+  /** Duration of the final flap animation in milliseconds */
+  duration?: number
   /** Show hinge line */
   hinge?: boolean
   /** Theme variant */
@@ -55,6 +57,8 @@ export interface LongFlapProps {
   digitHeight?: number
   /** Interval between flips in milliseconds */
   timing?: number
+  /** Duration of the final flap animation in milliseconds */
+  duration?: number
   /** Show hinge line */
   hinge?: boolean
   /** Theme variant */
@@ -78,13 +82,15 @@ export interface FlapProps {
   bottom?: boolean
   animated?: boolean
   final?: boolean
-  hinge?: boolean
+  phase?: 0 | 1
+  idle?: boolean
 }
 
 export interface FlapDigitProps {
   value: React.ReactNode
   prevValue: React.ReactNode
   final: boolean
+  revision: number
   mode: 'num' | 'alpha' | 'custom' | 'words'
   hinge: boolean
   digitWidth?: number
@@ -96,6 +102,7 @@ export interface FlapStackProps {
   stackKey: string
   value: number
   timing: number
+  duration: number
   mode: 'num' | 'alpha' | 'custom' | 'words'
   hinge: boolean
   digitWidth?: number
