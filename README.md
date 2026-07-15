@@ -45,6 +45,50 @@ function App() {
 
 Perfect for displaying strings with character-by-character flipping animation.
 
+#### Multi-row boards
+
+`SplitFlap` keeps its value as one flat string. To build a multi-row board, render the display as a CSS Grid and set a fixed number of columns. The grid wraps the direct digit children into rows while the component still uses one cursor array, one ticker subscription, and at most one state update per tick for the whole board.
+
+```tsx
+import type { CSSProperties } from 'react'
+import { Presets, SplitFlap } from 'react-split-flap'
+
+const WIDTH = 20
+const HEIGHT = 12
+
+const BOARD_STYLE: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: `repeat(${WIDTH}, 1.7ch)`,
+  columnGap: '1px',
+  rowGap: '3px',
+}
+
+const normalizeRows = (rows: string[]) =>
+  Array.from({ length: HEIGHT }, (_, index) =>
+    (rows[index] ?? '').padEnd(WIDTH, ' ').slice(0, WIDTH),
+  )
+
+function Board({ rows }: { rows: string[] }) {
+  const frame = normalizeRows(rows).join('')
+
+  return (
+    <SplitFlap
+      value={frame}
+      chars={Presets.ALPHANUM}
+      length={WIDTH * HEIGHT}
+      align="left"
+      style={BOARD_STYLE}
+      className="performance-mode"
+      animateOnMount={false}
+    />
+  )
+}
+```
+
+Every row must be padded or truncated to exactly `WIDTH` characters. Otherwise, a short row shifts every row after it. Do not include `\n` in `value`: it is treated as another flap character, not as a layout break.
+
+For large boards, prefer one grid-backed `SplitFlap` over one component per row. Splitting a 12-row board into 12 components creates 12 cursor states and ticker subscriptions instead of one.
+
 #### Props
 
 | Property         | Type                                         | Default        | Description                                                                          |
