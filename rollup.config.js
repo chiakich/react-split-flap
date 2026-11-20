@@ -15,9 +15,15 @@ const dropCss = {
   load: (id) => (id.endsWith('.css') ? '' : null),
 }
 
+const cleanTypesDir = () => rmSync(typesDir, { recursive: true, force: true })
+
+// In watch mode, deleting the input would retrigger this build with a missing entry
 const removeTypesDir = {
   name: 'remove-types-dir',
-  closeBundle: () => rmSync(typesDir, { recursive: true, force: true }),
+  closeBundle() {
+    if (!this.meta.watchMode) cleanTypesDir()
+  },
+  closeWatcher: cleanTypesDir,
 }
 
 export default [

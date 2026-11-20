@@ -1037,7 +1037,7 @@ resolve@^1.19.0, resolve@^1.22.1:
     path-parse "^1.0.7"
     supports-preserve-symlinks-flag "^1.0.0"
 
-rollup-plugin-dts@^6:
+rollup-plugin-dts@^6.5.1:
   version "6.5.1"
   resolved "https://registry.yarnpkg.com/rollup-plugin-dts/-/rollup-plugin-dts-6.5.1.tgz#09ff660e0b4b7da44399216faf99e64f322cdc19"
   integrity sha512-jODTXp3H7MK/Ur/ErtsrQ0G1GvaCmc3du+y5pNrdBMf6d7HlL2Nd/N6TkEr+f75CkUj01zEoEd7y2elH0eHi1Q==
